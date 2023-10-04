@@ -1,6 +1,9 @@
 # Secrets
 .env
 
+# Logging files
+lp_history.csv
+
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[cod]
