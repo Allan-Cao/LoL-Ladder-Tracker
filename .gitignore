@@ -2,7 +2,7 @@
 .env
 
 # Logging files
-lp_history.csv
+*.db
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
