@@ -15,7 +15,9 @@ NUM_CHALL_PLAYERS = 300
 NUM_GM_PLAYERS = 700
 
 HISTORY_FILE = "lp_history.csv"
-
+UP_ARROW = ":arrow_upper_right:"
+RIGHT_ARROW = ":arrow_right:"
+DOWN_ARROW = ":arrow_lower_right:"
 
 def get_league(url):
     response = requests.get(url)
@@ -76,11 +78,32 @@ challenger_cutoff = new_challenger_players[-1].get('leaguePoints') + 1
 grandmaster_cutoff = new_gm_players[-1].get('leaguePoints') + 1
 
 def main():
-    content = f"""Cutoff for Challenger in NA is currently >= {challenger_cutoff} LP
-Cutoff for Grandmaster in NA is currently >= {grandmaster_cutoff} LP"""
     log_to_csv(challenger_cutoff, grandmaster_cutoff, "na1")
-    # print(content)
-    requests.post(DISCORD_WEBHOOK, {'content': content})
+    webhook = {
+        'username': "Blitzcrank Bot",
+        'avatar_url': "https://prod.api.assets.riotgames.com/public/v1/asset/lol/13.18.1/CHAMPION/53/ICON",
+        'embeds': [{
+            'title': "Current Ranked Cutoffs for NA",
+            'fields': [{
+                'name': 'Challenger',
+                'value': f"{challenger_cutoff} LP"
+            }, {
+                'name': 'Grandmaster',
+                'value': f"{grandmaster_cutoff} LP"
+            },
+            # {
+            #     'name': 'Historic trends',
+            #     'value': 'test \n test \n test',
+            # },
+            
+            ],
+            'footer': {
+                'text': f"Updated {datetime.now().strftime('%b %d %Y • %H:%M')}",
+                'icon_url': 'https://i.imgur.com/0XC49UU.png',
+            },
+        }],
+    }
+    webhook = requests.post(DISCORD_WEBHOOK, json=webhook)
 
 
 if __name__ == "__main__":
