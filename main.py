@@ -48,12 +48,6 @@ def setup_db(database_file):
 setup_db(HISTORIC_FILE)
 
 
-def get_league(url):
-    response = requests.get(url)
-    response.raise_for_status()
-    return response.json().get("entries")
-
-
 def insert_data(rank: str, cutoff_rank: int, region="NA"):
     timestamp = datetime.now()
 
@@ -136,34 +130,50 @@ def generate_embed(rank, current_cutoff, region="NA"):
     return embeds
 
 
-challengerleagues = (
-    "https://na1.api.riotgames.com/lol/league/v4/challengerleagues/by-queue/RANKED_SOLO_5x5?api_key="
-    + API_KEY
-)
-grandmasterleagues = (
-    "https://na1.api.riotgames.com/lol/league/v4/grandmasterleagues/by-queue/RANKED_SOLO_5x5?api_key="
-    + API_KEY
-)
-masterleagues = (
-    "https://na1.api.riotgames.com/lol/league/v4/masterleagues/by-queue/RANKED_SOLO_5x5?api_key="
-    + API_KEY
-)
+def retrieve_apex_players(region="na1"):
+    def get_league(url):
+        response = requests.get(url)
+        response.raise_for_status()
+        return response.json().get("entries")
 
-challenger_players = get_league(challengerleagues)
-grandmaster_players = get_league(grandmasterleagues)
-master_players = get_league(masterleagues)
+    challengerleagues = (
+        f"https://{region}.api.riotgames.com/lol/league/v4/challengerleagues/by-queue/RANKED_SOLO_5x5?api_key="
+        + API_KEY
+    )
+    grandmasterleagues = (
+        f"https://{region}.api.riotgames.com/lol/league/v4/grandmasterleagues/by-queue/RANKED_SOLO_5x5?api_key="
+        + API_KEY
+    )
+    masterleagues = (
+        f"https://{region}.api.riotgames.com/lol/league/v4/masterleagues/by-queue/RANKED_SOLO_5x5?api_key="
+        + API_KEY
+    )
 
-apex_players = challenger_players + grandmaster_players + master_players
-apex_players.sort(key=lambda x: x["leaguePoints"], reverse=True)
+    challenger_players = get_league(challengerleagues)
+    grandmaster_players = get_league(grandmasterleagues)
+    master_players = get_league(masterleagues)
 
-new_challenger_players = apex_players[0:NUM_CHALL_PLAYERS]
-new_gm_players = apex_players[NUM_CHALL_PLAYERS : NUM_GM_PLAYERS + NUM_CHALL_PLAYERS]
+    apex_players = challenger_players + grandmaster_players + master_players
+    apex_players.sort(key=lambda x: x["leaguePoints"], reverse=True)
 
-challenger_cutoff = new_challenger_players[-1].get("leaguePoints") + 1
-grandmaster_cutoff = new_gm_players[-1].get("leaguePoints") + 1
+    return apex_players
+
+
+def calculate_cutoffs(apex_players):
+    new_challenger_players = apex_players[0:NUM_CHALL_PLAYERS]
+    new_gm_players = apex_players[
+        NUM_CHALL_PLAYERS : NUM_GM_PLAYERS + NUM_CHALL_PLAYERS
+    ]
+
+    challenger_cutoff = new_challenger_players[-1].get("leaguePoints") + 1
+    grandmaster_cutoff = new_gm_players[-1].get("leaguePoints") + 1
+
+    return challenger_cutoff, grandmaster_cutoff
 
 
 def main():
+    challenger_cutoff, grandmaster_cutoff = calculate_cutoffs(retrieve_apex_players())
+
     insert_data("challenger", challenger_cutoff)
     insert_data("grandmaster", grandmaster_cutoff)
 
